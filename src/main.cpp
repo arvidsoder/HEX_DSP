@@ -1,48 +1,59 @@
 #include <Audio.h>
 #include <Wire.h>
 #include "control_pcm3168.h"
-#define PCM3168_RESET_PIN 17
-// PCM3168 control object (I2C)
+#define PCM3168_RESET_PIN 17 
+
+
+// PCM3168 I2C control
 AudioControlPCM3168 pcm3168;
 
-// TDM2 audio streams (SAI2)
-AudioInputTDM2    tdm2_in;
-AudioOutputTDM2   tdm2_out;
+// TDM (SAI1)
+AudioInputTDM    tdm1_in;
+AudioOutputTDM   tdm1_out;
 
-// Simple pass-through for all channels
-AudioConnection patchCord0(tdm2_in, 0, tdm2_out, 0);
-AudioConnection patchCord1(tdm2_in, 1, tdm2_out, 1);
-AudioConnection patchCord2(tdm2_in, 2, tdm2_out, 2);
-AudioConnection patchCord3(tdm2_in, 3, tdm2_out, 3);
-AudioConnection patchCord4(tdm2_in, 4, tdm2_out, 4);
-AudioConnection patchCord5(tdm2_in, 5, tdm2_out, 5);
+// Pitch detector
+AudioAnalyzeNoteFrequency  notefreq;
 
+// Route TDM input chan 0 → pitch detector
+AudioConnection patchCord0(tdm1_in, 0, notefreq, 0);
+
+// (Optional) echo input to output
+AudioConnection patchCord1(tdm1_in, 0, tdm1_out, 0);
 
 void setup() {
- 
+  Serial.begin(115200);
+  delay(500);
 
+  Serial.println("=== PCM3168 + SAI1 + Pitch Detection Test ===");
+  
   AudioMemory(100); // plenty, for queues and TDM
 
   pinMode(LED_BUILTIN,OUTPUT);
   pcm3168.reset(PCM3168_RESET_PIN);
- 
-  while(!Serial)
-    ;
-
-  if (CrashReport)
-    Serial.print(CrashReport);   
-    
-
-  // Initialize PCM3168A
-
   pcm3168.enable();
-  pcm3168.volume(0.7);
-  pcm3168.inputLevel(0, 10.0f);
-  Serial.begin(115200);
-  Serial.println("PCM3168A via SAI2 TDM started");
+  Wire.begin();          // I2C0 on Teensy pins 18/19
+  Wire.setClock(400000);
+  
+
+  if (!pcm3168.enable()) {
+    Serial.println("❌ PCM3168 init failed");
+  } else {
+    Serial.println("✅ PCM3168 enabled");
+  }
+
+  pcm3168.volume(0.8);
+
+  notefreq.begin(0.3f);   // sensitivity (0.0–1.0), default 0.15
 }
 
 void loop() {
-  // Optional: adjust levels or mute dynamically
+  if (notefreq.available()) {
+    float freq = notefreq.read();
+    float prob = notefreq.probability();
 
+    Serial.print("Freq: ");
+    Serial.print(freq);
+    Serial.print(" Hz   | Confidence: ");
+    Serial.println(prob, 2);
+  }
 }

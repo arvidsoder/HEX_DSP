@@ -13,7 +13,19 @@ extern "C" {
 // SCREEN: ui_System
 extern void ui_System_screen_init(void);
 extern void ui_System_screen_destroy(void);
+extern void ui_event_System(lv_event_t * e);
 extern lv_obj_t * ui_System;
+extern lv_obj_t * ui_Panel5;
+extern lv_obj_t * ui_Effect4;
+extern void ui_event_ImgButton5(lv_event_t * e);
+extern lv_obj_t * ui_ImgButton5;
+extern void ui_event_Button14(lv_event_t * e);
+extern lv_obj_t * ui_Button14;
+extern lv_obj_t * ui_Effect5;
+extern lv_obj_t * ui_Button4;
+extern lv_obj_t * ui_Effect1;
+extern lv_obj_t * ui_Button5;
+extern lv_obj_t * ui_Effect6;
 // CUSTOM VARIABLES
 extern lv_obj_t * uic_System;
 

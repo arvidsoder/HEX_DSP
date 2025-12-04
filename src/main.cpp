@@ -1,86 +1,102 @@
-#include <Arduino.h>
+#include <Audio.h>
+#include <Wire.h>
 #include <SPI.h>
-#include <lvgl.h>
-#include "display_driver.h"
-#include "touch_driver.h"
-#include "ui.h" // <--- NEW: Include SquareLine Studio header
+#include <SD.h>
+#include <SerialFlash.h>
 
-// ------------------------------
-// SquareLine Studio Integration
-// ------------------------------
-// The UI is initialized by calling ui_init(), defined in ui.c
-// The old lv_demo_ui() function is no longer needed.
-// ------------------------------
+// GUItool: begin automatically generated code
+AudioInputTDM            tdm1;           
+AudioOutputTDM           tdm2;          
+AudioEffectFreeverb     freeverb1;
+AudioEffectFreeverb     freeverb2;
+      
+AudioEffectChorus      chorusFx;
+AudioEffectDelay         delayFx;
+AudioMixer4              mixer1;
+AudioMixer4              mixer2;
+AudioMixer4              mixer3;
 
-// Global variable for simple debug timing
-unsigned long last_debug_print = 0;
-unsigned long last_heartbeat = 0;
+
+
+AudioSynthWaveform       sine1;
+AudioSynthWaveform       sine2;
+AudioSynthWaveform       sine3;
+AudioSynthWaveform       sine4;
+
+AudioConnection          patchCord0(tdm1, 0, mixer1, 0);
+AudioConnection          patchCord1(tdm1, 0, freeverb1, 0);
+AudioConnection          patchCord2(freeverb1, 0, mixer1, 1);
+AudioConnection          patchCord3(mixer1, 0, tdm2, 0);
+
+AudioConnection          patchCord01(tdm1, 2, mixer2, 0);
+AudioConnection          patchCord11(tdm1, 2, freeverb2, 0);
+AudioConnection          patchCord21(freeverb2, 0, mixer2, 1);
+AudioConnection          patchCord31(mixer2, 0, tdm2, 2);
+
+
+//AudioConnection          patchCord00(freeverb1, 0, tdm2, 0);
+//AudioConnection          patchCord01(tdm1, 2, freeverb1, 1);
+AudioConnection          patchCord02(tdm1, 2, tdm2, 2);
+AudioConnection          patchCord03(tdm1, 4, tdm2, 4);
+AudioConnection          patchCord04(tdm1, 6, tdm2, 6);
+AudioConnection          patchCord05(tdm1, 8, tdm2, 8);
+AudioConnection          patchCord06(tdm1, 10, tdm2, 10);
+AudioConnection          patchCord07(tdm1, 12, tdm2, 12);
+
+
+
+AudioControlCS42448      cs42448_1;      //xy=273,405
+// GUItool: end automatically generated code
+
 
 void setup() {
-    Serial.begin(115200);
-    // Wait for USB Serial for up to 5s
-    while (!Serial && (millis() < 5000)) ; 
-    
-    Serial.println("--- Teensy 4.1 LVGL DSP Init ---");
-    Serial.println("Starting LVGL 8.3 Project Initialization...");
+  AudioMemory(1000);
+  delay(1000);
+  Serial.begin(115200);
 
-    // ----------------------------------------------------
-    // *** CRITICAL TEENSY 4.1 SPI INITIALIZATION ***
-    // ----------------------------------------------------
-    
-    // Explicitly initialize the default SPI bus and set mode/speed for shared bus safety.
-    SPI.begin();
-    SPI.setClockDivider(SPI_CLOCK_DIV2); 
-    SPI.setDataMode(SPI_MODE0);
-    
-    // Force Touch CS HIGH to ensure the touch controller is inactive.
-    pinMode(T_CS, OUTPUT); 
-    digitalWrite(T_CS, HIGH);
-    
-    // ----------------------------------------------------
-
-    // 1. Initialize the LVGL core
-    lv_init();
-    
-    // 2. Initialize the display driver (TFT_CS, TFT_DC, TFT_RST, flush callback)
-    display_driver_init(); 
-
-    // 3. Initialize the touchscreen driver (Touch_CS, Touch_IRQ, read callback)
-    touch_driver_init(); 
-
-    // 4. Create your actual UI
-    ui_init(); // <--- NEW: Call the SquareLine Studio initialization function
-
-    Serial.println("LVGL UI Initialized and Running!");
+  if (!cs42448_1.enable() || !cs42448_1.volume(0.7))
+  {
+    Serial.println("Audio Codec CS42448 not found!");
+  }
+  else
+  {
+    Serial.println("Audio Codec CS42448 initialized.");
+  }
+  Serial.println(AUDIO_SAMPLE_RATE_EXACT);
+  freeverb1.roomsize(0.7);
+  freeverb1.damping(0.01);
+  freeverb2.roomsize(0.7);
+  freeverb2.damping(0.01);
+  
+  sine1.frequency(40);
+  sine1.amplitude(0.7);
+  sine2.frequency(550);
+  sine2.amplitude(0.1);
+  sine3.frequency(660);
+  sine3.amplitude(0.1);
+  sine4.frequency(770);
+  sine4.amplitude(0.1);
+  
 }
 
 void loop() {
-    // LVGL MUST be called frequently to handle drawing, events, and timers.
-    
-    // ** FIX: Manually increment LVGL's internal time clock **
-    lv_tick_inc(5); 
-
-    lv_timer_handler();
-    delay(5); 
-
-    // --- MAIN LOOP HEARTBEAT ---
-    if (millis() - last_heartbeat > 1000) {
-        Serial.println("Loop Heartbeat: OK");
-        last_heartbeat = millis();
-    }
-    
-    // --- TOUCH DEBUGGING IN MAIN LOOP (V8.3.6 Compliant & Stable) ---
-    if (is_touch_active()) {
-        
-        lv_point_t p;
-        lv_indev_get_point(touch_indev, &p);
-
-        if (p.x >= 0 && p.x < 320 && p.y >= 0 && p.y < 240) {
-            Serial.print("MAIN Loop Touch Polled at MAPPED (X,Y): (");
-            Serial.print(p.x);
-            Serial.print(", ");
-            Serial.print(p.y);
-            Serial.println(")");
-        }
-    }
+  if (millis() % 5000 < 10)
+  {
+    freeverb1.enable();
+    mixer1.gain(1, 1.0f);
+   mixer1.gain(0, 0.0f);
+   freeverb2.enable();
+    mixer2.gain(1, 1.0f);
+   mixer2.gain(0, 0.0f);
+     
+  }
+  else if (millis() % 5000 > 2500 && millis() % 5000 < 2600)
+  {
+    freeverb1.disable();
+    mixer1.gain(0, 1.0f);
+   mixer1.gain(1, 0.0f);
+    freeverb2.disable();
+    mixer2.gain(0, 1.0f);
+   mixer2.gain(1, 0.0f);
+  }
 }

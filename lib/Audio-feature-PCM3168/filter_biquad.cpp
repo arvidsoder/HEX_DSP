@@ -33,6 +33,14 @@
 void AudioFilterBiquad::update(void)
 {
 	audio_block_t *block;
+	
+	// If disabled, drop output (mute)
+	if (!enabled) {
+		block = receiveWritable();
+		if (block) release(block);
+		return;
+	}
+	
 	int32_t b0, b1, b2, a1, a2, sum;
 	uint32_t in2, out2, bprev, aprev, flag;
 	uint32_t *data, *end;

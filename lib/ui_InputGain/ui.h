@@ -32,6 +32,7 @@ extern "C" {
 #include "ui_InputGain.h"
 #include "ui_OutputLevel.h"
 #include "ui_System.h"
+#include "ui_Effectchain.h"
 
 ///////////////////// VARIABLES ////////////////////
 
@@ -39,6 +40,9 @@ extern "C" {
 // EVENTS
 
 extern lv_obj_t * ui____initial_actions0;
+
+// IMAGES AND IMAGE SETS
+LV_IMG_DECLARE(ui_img_1618134784);    // assets/arrow_back_ios_32dp_E3E3E3_FILL0_wght400_GRAD0_opsz40 (1).png
 
 // UI INIT
 void ui_init(void);

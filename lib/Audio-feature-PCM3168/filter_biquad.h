@@ -33,7 +33,7 @@
 class AudioFilterBiquad : public AudioStream
 {
 public:
-	AudioFilterBiquad(void) : AudioStream(1, inputQueueArray) {
+	AudioFilterBiquad(void) : AudioStream(1, inputQueueArray), enabled(true) {
 		// by default, the filter will not pass anything
 		for (int i=0; i<32; i++) definition[i] = 0;
 	}
@@ -148,9 +148,14 @@ public:
 		setCoefficients(stage, coef);
 	}
 
+	void enable(void) { enabled = true; }
+	void disable(void) { enabled = false; }
+	boolean isEnabled(void) const { return enabled; }
+
 private:
 	int32_t definition[32];  // up to 4 cascaded biquads
 	audio_block_t *inputQueueArray[1];
+	boolean enabled;
 };
 
 #endif

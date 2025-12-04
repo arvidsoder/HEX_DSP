@@ -14,6 +14,13 @@ extern "C" {
 extern void ui_InputGain_screen_init(void);
 extern void ui_InputGain_screen_destroy(void);
 extern lv_obj_t * ui_InputGain;
+extern lv_obj_t * ui_Panel2;
+extern lv_obj_t * ui_Effect2;
+extern void ui_event_ImgButton3(lv_event_t * e);
+extern lv_obj_t * ui_ImgButton3;
+extern lv_obj_t * ui_Arc10;
+extern lv_obj_t * ui_Label8;
+extern lv_obj_t * ui_Label9;
 // CUSTOM VARIABLES
 extern lv_obj_t * uic_InputGain;
 

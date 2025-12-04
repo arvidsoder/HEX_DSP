@@ -34,6 +34,7 @@
 
 AudioEffectFreeverb::AudioEffectFreeverb() : AudioStream(1, inputQueueArray)
 {
+	enabled = true;
 	memset(comb1buf, 0, sizeof(comb1buf));
 	memset(comb2buf, 0, sizeof(comb2buf));
 	memset(comb3buf, 0, sizeof(comb3buf));
@@ -132,6 +133,14 @@ void AudioEffectFreeverb::update()
 #if defined(__ARM_ARCH_7EM__)
 	const audio_block_t *block;
 	audio_block_t *outblock;
+	
+	// If disabled, just pass through
+	if (!enabled) {
+		audio_block_t *tmp = receiveReadOnly(0);
+		if (tmp) release(tmp);
+		return;
+	}
+	
 	int i;
 	int16_t input, bufout, output;
 	int32_t sum;
@@ -236,6 +245,7 @@ void AudioEffectFreeverb::update()
 
 AudioEffectFreeverbStereo::AudioEffectFreeverbStereo() : AudioStream(1, inputQueueArray)
 {
+	enabled = true;
 	memset(comb1bufL, 0, sizeof(comb1bufL));
 	memset(comb2bufL, 0, sizeof(comb2bufL));
 	memset(comb3bufL, 0, sizeof(comb3bufL));
@@ -311,6 +321,14 @@ void AudioEffectFreeverbStereo::update()
 	const audio_block_t *block;
 	audio_block_t *outblockL;
 	audio_block_t *outblockR;
+	
+	// If disabled, just pass through
+	if (!enabled) {
+		block = receiveReadOnly(0);
+		if (block) release((audio_block_t *)block);
+		return;
+	}
+	
 	int i;
 	int16_t input, bufout, outputL, outputR;
 	int32_t sum;

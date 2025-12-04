@@ -3,8 +3,10 @@ SET(SOURCES ui_Menu.c
     ui_InputGain.c
     ui_OutputLevel.c
     ui_System.c
+    ui_Effectchain.c
     ui.c
     ui_comp_hook.c
-    ui_helpers.c)
+    ui_helpers.c
+    ui_img_1618134784.c)
 
 add_library(ui ${SOURCES})

@@ -7,6 +7,7 @@
 #define X_RAW_MAX 3800  // Raw bounds for one axis
 #define Y_RAW_MIN 310   // Raw bounds for the other axis
 #define Y_RAW_MAX 3800  // Raw bounds for the other axis
+#define Z_RAW_THRESHOLD 3500 // Minimum pressure to consider a valid touch
 // --- SPI Speed (2 MHz for XPT2046) ---
 #define XPT2046_SPI_SPEED 2000000 
 
@@ -41,7 +42,7 @@ static void my_touch_read(lv_indev_drv_t *indev, lv_indev_data_t *data)
         SPI.endTransaction();
         
         // Check Z-pressure for a valid touch
-        if (p.z < 4000) { 
+        if (p.z < Z_RAW_THRESHOLD) { 
             data->state = LV_INDEV_STATE_PRESSED;
 
             // --- CALIBRATION AND MAPPING (SWAPPED AXES) ---

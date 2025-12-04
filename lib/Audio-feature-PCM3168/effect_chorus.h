@@ -39,12 +39,15 @@ public AudioStream
 {
 public:
   AudioEffectChorus(void):
-  AudioStream(1,inputQueueArray), num_chorus(2)
+  AudioStream(1,inputQueueArray), num_chorus(2), enabled(true)
   { }
 
   boolean begin(short *delayline,int delay_length,int n_chorus);
   virtual void update(void);
   void voices(int n_chorus);
+  void enable(void) { enabled = true; }
+  void disable(void) { enabled = false; }
+  boolean isEnabled(void) const { return enabled; }
   
 private:
   audio_block_t *inputQueueArray[1];
@@ -52,6 +55,7 @@ private:
   short l_circ_idx;
   int num_chorus;
   int delay_length;
+  boolean enabled;
 };
 
 #endif

@@ -31,6 +31,12 @@ void AudioFilterFIR::update(void)
 	block = receiveReadOnly();
 	if (!block) return;
 
+	// If disabled, drop output (mute)
+	if (!enabled) {
+		release(block);
+		return;
+	}
+
 	// If there's no coefficient table, give up.  
 	if (coeff_p == NULL) {
 		release(block);

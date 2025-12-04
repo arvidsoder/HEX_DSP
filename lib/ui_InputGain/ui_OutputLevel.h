@@ -14,6 +14,14 @@ extern "C" {
 extern void ui_OutputLevel_screen_init(void);
 extern void ui_OutputLevel_screen_destroy(void);
 extern lv_obj_t * ui_OutputLevel;
+extern lv_obj_t * ui_Panel4;
+extern lv_obj_t * ui_Effect3;
+extern void ui_event_ImgButton4(lv_event_t * e);
+extern lv_obj_t * ui_ImgButton4;
+extern lv_obj_t * ui_Slider14;
+extern lv_obj_t * ui_Label10;
+extern lv_obj_t * ui_Checkbox2;
+extern lv_obj_t * ui_Label11;
 // CUSTOM VARIABLES
 extern lv_obj_t * uic_OutputLevel;
 

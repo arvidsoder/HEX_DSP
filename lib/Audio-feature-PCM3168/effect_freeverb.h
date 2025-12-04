@@ -49,7 +49,11 @@ public:
 		combdamp2 = x2;
 		__enable_irq();
 	}
+	void enable(void) { enabled = true; }
+	void disable(void) { enabled = false; }
+	boolean isEnabled(void) const { return enabled; }
 private:
+	boolean enabled;
 	audio_block_t *inputQueueArray[1];
 	int16_t comb1buf[1116];
 	int16_t comb2buf[1188];
@@ -109,7 +113,11 @@ public:
 		combdamp2 = x2;
 		__enable_irq();
 	}
+	void enable(void) { enabled = true; }
+	void disable(void) { enabled = false; }
+	boolean isEnabled(void) const { return enabled; }
 private:
+	boolean enabled;
 	audio_block_t *inputQueueArray[1];
 	int16_t comb1bufL[1116];
 	int16_t comb2bufL[1188];

@@ -76,6 +76,13 @@ void AudioEffectChorus::update(void)
 
   if(l_delayline == NULL)return;
   
+  // If disabled, drop output (mute)
+  if(!enabled) {
+    block = receiveWritable(0);
+    if(block) release(block);
+    return;
+  }
+  
   // do passthru
   // It stores the unmodified data in the delay line so that
   // it isn't as likely to click

@@ -33,6 +33,12 @@ void AudioEffectRectifier::update(void)
 	audio_block_t *block = receiveWritable();
 	if (!block) return;
 
+	// If disabled, drop output (mute)
+	if (!enabled) {
+		release(block);
+		return;
+	}
+
 	int16_t *p = block->data;
 	int16_t *end = block->data + AUDIO_BLOCK_SAMPLES;
 	while (p < end) {

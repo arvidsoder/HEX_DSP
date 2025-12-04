@@ -38,6 +38,7 @@ void ui_init(void)
     ui_InputGain_screen_init();
     ui_OutputLevel_screen_init();
     ui_System_screen_init();
+    ui_Effectchain_screen_init();
     ui____initial_actions0 = lv_obj_create(NULL);
     lv_disp_load_scr(ui_Menu);
 }
@@ -49,4 +50,5 @@ void ui_destroy(void)
     ui_InputGain_screen_destroy();
     ui_OutputLevel_screen_destroy();
     ui_System_screen_destroy();
+    ui_Effectchain_screen_destroy();
 }

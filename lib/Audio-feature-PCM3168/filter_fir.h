@@ -36,7 +36,7 @@
 class AudioFilterFIR : public AudioStream
 {
 public:
-	AudioFilterFIR(void): AudioStream(1,inputQueueArray), coeff_p(NULL) {
+	AudioFilterFIR(void): AudioStream(1,inputQueueArray), coeff_p(NULL), enabled(true) {
 	}
 	void begin(const short *cp, int n_coeffs) {
 		coeff_p = cp;
@@ -53,11 +53,15 @@ public:
 		coeff_p = NULL;
 	}
 	virtual void update(void);
+	void enable(void) { enabled = true; }
+	void disable(void) { enabled = false; }
+	boolean isEnabled(void) const { return enabled; }
 private:
 	audio_block_t *inputQueueArray[1];
 
 	// pointer to current coefficients or NULL or FIR_PASSTHRU
 	const short *coeff_p;
+	boolean enabled;
 
 	// ARM DSP Math library filter instance
 	arm_fir_instance_q15 fir_inst;

@@ -33,10 +33,14 @@
 class AudioEffectRectifier: public AudioStream
 {
 public:
-	AudioEffectRectifier(void) : AudioStream(1, inputQueueArray) {}
+	AudioEffectRectifier(void) : AudioStream(1, inputQueueArray), enabled(true) {}
 	virtual void update(void);
+	void enable(void) { enabled = true; }
+	void disable(void) { enabled = false; }
+	boolean isEnabled(void) const { return enabled; }
 private:
 	audio_block_t *inputQueueArray[1];
+	boolean enabled;
 };
 
 #endif

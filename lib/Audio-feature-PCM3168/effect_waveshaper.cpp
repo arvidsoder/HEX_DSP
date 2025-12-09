@@ -55,11 +55,17 @@ void AudioEffectWaveshaper::shape(float* waveshape, int length)
 
 void AudioEffectWaveshaper::update(void)
 {
-  if(!waveshape) return;
-
   audio_block_t *block;
   block = receiveWritable();
   if (!block) return;
+
+  // If disabled, mute output
+  if(!enabled) {
+    release(block);
+    return;
+  }
+
+  if(!waveshape) return;
 
   uint16_t x, xa;
   int16_t i, ya, yb;

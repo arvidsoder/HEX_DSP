@@ -1,60 +1,78 @@
-#include <Audio.h>
+#include "audio_driver.h"
+#include <SdFat.h>
 #include <Wire.h>
 #include <SPI.h>
-#include <SD.h>
+#include <lvgl.h>
+#include "display_driver.h"
+#include "touch_driver.h"
+#include "ui.h" // <--- NEW: Include SquareLine Studio header
 #include <SerialFlash.h>
-
+// ------------------------------
+// LVGL Frame Rate Configuration
+// ------------------------------
+// 30 FPS = 33 milliseconds per frame
+// 20 FPS = 50 milliseconds per frame
+// 10 FPS = 100 milliseconds per frame
+#define LVGL_FRAME_PERIOD_MS 20 // Targeting approx 30 FPS
+unsigned long last_lvgl_tick_ms = 0;
+SdFs sd; // SD card object
 // GUItool: begin automatically generated code
 AudioInputTDM            tdm1;           
 AudioOutputTDM           tdm2;          
-AudioEffectFreeverb     freeverb1;
-AudioEffectFreeverb     freeverb2;
-      
-AudioEffectChorus      chorusFx;
-AudioEffectDelay         delayFx;
-AudioMixer4              mixer1;
-AudioMixer4              mixer2;
-AudioMixer4              mixer3;
+EffectMixer8           stage1;             //xy=120,256
+AudioFilterFIR          cabIR;              //xy=330,150
+AudioMixer4              cabMix;             //xy=480,150
 
-
-
-AudioSynthWaveform       sine1;
-AudioSynthWaveform       sine2;
-AudioSynthWaveform       sine3;
-AudioSynthWaveform       sine4;
-
-AudioConnection          patchCord0(tdm1, 0, mixer1, 0);
-AudioConnection          patchCord1(tdm1, 0, freeverb1, 0);
-AudioConnection          patchCord2(freeverb1, 0, mixer1, 1);
-AudioConnection          patchCord3(mixer1, 0, tdm2, 0);
-
-AudioConnection          patchCord01(tdm1, 2, mixer2, 0);
-AudioConnection          patchCord11(tdm1, 2, freeverb2, 0);
-AudioConnection          patchCord21(freeverb2, 0, mixer2, 1);
-AudioConnection          patchCord31(mixer2, 0, tdm2, 2);
-
-
-//AudioConnection          patchCord00(freeverb1, 0, tdm2, 0);
-//AudioConnection          patchCord01(tdm1, 2, freeverb1, 1);
-AudioConnection          patchCord02(tdm1, 2, tdm2, 2);
-AudioConnection          patchCord03(tdm1, 4, tdm2, 4);
-AudioConnection          patchCord04(tdm1, 6, tdm2, 6);
-AudioConnection          patchCord05(tdm1, 8, tdm2, 8);
-AudioConnection          patchCord06(tdm1, 10, tdm2, 10);
-AudioConnection          patchCord07(tdm1, 12, tdm2, 12);
-
-
-
+AudioConnection        patchStage1(tdm1, 0, stage1.in, 0); //xy=198,303
+AudioConnection        patchIR(stage1.out, 0, cabIR, 0); //xy=198,303
+AudioConnection        patchOut(cabIR, 0, cabMix, 1); //xy=198,303
+AudioConnection        patchCabMixLeft(stage1.out, 0, cabMix, 0); //xy=198,303
+AudioConnection        patchToTDMOut(cabMix, 0, tdm2, 0); //xy=198,303
 AudioControlCS42448      cs42448_1;      //xy=273,405
-// GUItool: end automatically generated code
 
+// GUItool: end automatically generated code
+const int16_t cabIRTaps = 2000;
+int16_t cabIRCoeffs[cabIRTaps];
+uint8_t effctidx = 0;
+uint8_t change_effect = 0;
+
+#define BUTTON1_PIN 32
+#define BUTTON2_PIN 31
+bool button1;
+bool button2;
+
+// Load a 16-bit PCM WAV from SD, convert to mono Q15 and install in FIR.
+// - path: "/IR.WAV"
+// - fir: reference to your AudioFilterFIR instance
+// - maxTaps: upper limit (should be <= FIR_MAX_COEFFS)
+// - csPin: SD chip select (default BUILTIN_SDCARD for Teensy)
+// Returns: number of taps loaded (>0) on success, or negative error code:
+//   -1 open failed, -2 bad header, -3 unsupported format, -4 memory allocation failed
+
+void cabIREnable(bool enable) {
+  if (enable) {
+    cabIR.enable();
+    cabMix.gain(0, 0.0);
+    cabMix.gain(1, 1.0);
+  } else {
+    cabIR.disable();
+    cabMix.gain(0, 1.0);
+    cabMix.gain(1, 0.0);
+  }
+}
 
 void setup() {
   AudioMemory(1000);
   delay(1000);
   Serial.begin(115200);
-
-  if (!cs42448_1.enable() || !cs42448_1.volume(0.7))
+  int taps = load_wav_to_fir("Brohymn Mesa 4x12 SM57 V30 1.wav", cabIR, 200, cabIRTaps, sd);
+  if (taps > 0) { 
+  Serial.println("IR ready");
+} else {
+  Serial.print("Load failed: "); Serial.println(taps);
+}
+sd.end();
+  if (!cs42448_1.enable() || !cs42448_1.volume(1.0) || !cs42448_1.inputLevel(1.0))
   {
     Serial.println("Audio Codec CS42448 not found!");
   }
@@ -63,40 +81,78 @@ void setup() {
     Serial.println("Audio Codec CS42448 initialized.");
   }
   Serial.println(AUDIO_SAMPLE_RATE_EXACT);
-  freeverb1.roomsize(0.7);
-  freeverb1.damping(0.01);
-  freeverb2.roomsize(0.7);
-  freeverb2.damping(0.01);
-  
-  sine1.frequency(40);
-  sine1.amplitude(0.7);
-  sine2.frequency(550);
-  sine2.amplitude(0.1);
-  sine3.frequency(660);
-  sine3.amplitude(0.1);
-  sine4.frequency(770);
-  sine4.amplitude(0.1);
-  
+
+  // ----------------------------------------------------
+    // *** CRITICAL TEENSY 4.1 SPI INITIALIZATION ***
+    // ----------------------------------------------------
+    
+    // Explicitly initialize the default SPI bus and set mode/speed for shared bus safety.
+    SPI.begin();
+    SPI.setClockDivider(SPI_CLOCK_DIV2); 
+    SPI.setDataMode(SPI_MODE0);
+    
+
+    pinMode(BUTTON1_PIN, INPUT_PULLUP);
+    pinMode(BUTTON2_PIN, INPUT_PULLUP);
+    // Force Touch CS HIGH to ensure the touch controller is inactive.
+    pinMode(T_CS, OUTPUT); 
+    digitalWrite(T_CS, HIGH);
+    
+    // ----------------------------------------------------
+
+    // 1. Initialize the LVGL core
+    lv_init();
+    
+    // 2. Initialize the display driver (TFT_CS, TFT_DC, TFT_RST, flush callback)
+    display_driver_init(); 
+
+    // 3. Initialize the touchscreen driver (Touch_CS, Touch_IRQ, read callback)
+    touch_driver_init(); 
+
+    // 4. Create your actual UI
+    ui_init(); // <--- NEW: Call the SquareLine Studio initialization function
+    
+
+    Serial.println("LVGL UI Initialized and Running!");
 }
 
+
 void loop() {
-  if (millis() % 5000 < 10)
+  if (millis() - last_lvgl_tick_ms >= LVGL_FRAME_PERIOD_MS) {
+        lv_tick_inc(millis() - last_lvgl_tick_ms);
+        lv_timer_handler();
+        last_lvgl_tick_ms = millis();
+        button1 = !digitalRead(BUTTON1_PIN);
+        button2 = !digitalRead(BUTTON2_PIN);
+    }
+
+  if (millis() % 1000 == 0 && change_effect == 1)
   {
-    freeverb1.enable();
-    mixer1.gain(1, 1.0f);
-   mixer1.gain(0, 0.0f);
-   freeverb2.enable();
-    mixer2.gain(1, 1.0f);
-   mixer2.gain(0, 0.0f);
-     
+    change_effect = 0;
+    if (button1)
+    {
+      effctidx ++;
+    }
+    
+    
+    if (button2)
+    {
+      cabIREnable(!cabIR.isEnabled());
+    }
+    
+    stage1.setActiveEffect(effctidx % 6);
+    Serial.print("Active Effect Index: ");
+    Serial.print(stage1.getActiveEffect());
+    Serial.print("   Cab IR: ");
+    Serial.println(cabIR.isEnabled() ? "Enabled" : "Disabled");
+    
+    stage1.setWetDryMix(0.9f);
   }
-  else if (millis() % 5000 > 2500 && millis() % 5000 < 2600)
+  else if (millis() % 1000 > 500 && millis() % 1000 < 510)
   {
-    freeverb1.disable();
-    mixer1.gain(0, 1.0f);
-   mixer1.gain(1, 0.0f);
-    freeverb2.disable();
-    mixer2.gain(0, 1.0f);
-   mixer2.gain(1, 0.0f);
+    change_effect = 1;
+
+
   }
 }
+

@@ -31,7 +31,7 @@
 // without any filtering (as opposed to doing nothing at all)
 #define FIR_PASSTHRU ((const short *) 1)
 
-#define FIR_MAX_COEFFS 200
+#define FIR_MAX_COEFFS 4096
 
 class AudioFilterFIR : public AudioStream
 {

@@ -31,14 +31,18 @@
 class AudioEffectWaveshaper : public AudioStream
 {
   public:
-    AudioEffectWaveshaper(void): AudioStream(1, inputQueueArray), waveshape(nullptr) {}
+    AudioEffectWaveshaper(void): AudioStream(1, inputQueueArray), waveshape(nullptr), enabled(true) {}
     ~AudioEffectWaveshaper();
     virtual void update(void);
     void shape(float* waveshape, int length);
+    void enable(void) { enabled = true; }
+    void disable(void) { enabled = false; }
+    boolean isEnabled(void) const { return enabled; }
   private:
     audio_block_t *inputQueueArray[1];
     int16_t* waveshape;
     int16_t lerpshift;
+    boolean enabled;
 };
 
 #endif

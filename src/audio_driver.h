@@ -4,11 +4,10 @@
 
 
 // Effect indices for setActiveEffect()
-#define FX_INDEX_CHORUS      1
-#define FX_INDEX_REVERB      2
-#define FX_INDEX_RECTIFIER   3
-#define FX_INDEX_EQ          4
-#define FX_INDEX_DIST         5
+
+#define FX_INDEX_RECTIFIER   1
+#define FX_INDEX_EQ          2
+#define FX_INDEX_DIST        3
 
 
 static int resample_linear(float *src, int srcLen, uint32_t srcRate, uint32_t dstRate, 
@@ -32,18 +31,13 @@ public:
     AudioMixer4 out;                    // Output mixer combining mixerA and mixerB
     
     // Effect objects
-    AudioEffectChorus chorusFx;         // Chorus effect (channel 1)
-    AudioEffectFreeverb reverbFx;       // Reverb effect (channel 2)
+    
     AudioEffectRectifier rectifierFx;   // Rectifier effect (channel 3)
     AudioFilterBiquad eqFx;             // EQ/Biquad filter (channel 4)
     AudioEffectWaveshaper distFx;               // FIR filter effect (channel 5)
     
     // Audio connections (patches)
     AudioConnection patchInToMix;
-    AudioConnection patchInToChorus;
-    AudioConnection patchChorusToMix;
-    AudioConnection patchInToReverb;
-    AudioConnection patchReverbToMix;
     AudioConnection patchInToRectifier;
     AudioConnection patchRectifierToMix;
     AudioConnection patchInToEQ;
@@ -102,33 +96,8 @@ public:
      */
     void setEffectEnabled(uint8_t effectIndex, boolean enable);
 
-    /**
-     * @brief Set chorus parameters
-     * @param numVoices Number of chorus voices (1+)
-     */
-    void setChorusVoices(int numVoices);
-    /**
-     * @brief Set chorus delay buffer active length (samples)
-     * @param delaySamples Size in samples to use from the preallocated buffer.
-     *        Must be >= 20 and <= CHORUS_BUFFER_SIZE. Changing this at runtime
-     *        will change the effective chorus amount (longer delay → more pronounced chorus).
-     */
-    void setChorusDelay(int delaySamples);
 
-    /**
-     * @brief Set reverb parameters
-     * @param roomsize Room size (0.0 to 1.0)
-     * @param damping Damping level (0.0 to 1.0)
-     */
-    void setReverbParams(float roomsize, float damping);
 
-    /**
-     * @brief Configure EQ (biquad) filter
-     * @param stage Filter stage (0-3 for up to 4 cascaded biquads)
-     * @param type Filter type: "lowpass", "highpass", "bandpass", "notch", "lowshelf", "highshelf"
-     * @param frequency Center/cutoff frequency in Hz
-     * @param qOrGain Q factor for bandpass/notch, gain for shelf filters
-     */
     void setEQ(uint32_t stage, const char *type, float frequency, float qOrGain = 0.7071f);
 
     /**
@@ -141,18 +110,10 @@ private:
     uint8_t activeEffect;  // Currently active effect index
     float32_t wetDry;      // Wet/dry mix ratio
     
-    // Effect buffers
-    static const int CHORUS_BUFFER_SIZE = 8820;  // ~200ms at 44.1kHz
-    short chorusBuffer[CHORUS_BUFFER_SIZE];
     // Current number of chorus voices (kept so we can re-init chorus when changing delay)
-    int chorusVoices;
 
-    float distGain;
-    float distBias;
-    float distBiasTanh;
-    float distMaxOutput;
-    static const int SHAPE_LEN = 2049;
-    float shape_lut[SHAPE_LEN];
+
+    
 };
 
 

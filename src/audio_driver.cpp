@@ -188,19 +188,16 @@ int load_wav_to_fir(const char *path, AudioFilterFIR &fir, int maxDurationMs, in
   return finalTaps;
 }
 
+
 // Constructor - initializes audio objects and connections
 EffectMixer8::EffectMixer8(void) 
     : patchInToMix(in, 0, mixerA, 0),
-      patchInToChorus(in, 0, chorusFx, 0),
-      patchChorusToMix(chorusFx, 0, mixerA, FX_INDEX_CHORUS),
-      patchInToReverb(in, 0, reverbFx, 0),
-      patchReverbToMix(reverbFx, 0, mixerA, FX_INDEX_REVERB),
       patchInToRectifier(in, 0, rectifierFx, 0),
       patchRectifierToMix(rectifierFx, 0, mixerA, FX_INDEX_RECTIFIER),
       patchInToEQ(in, 0, eqFx, 0),
-      patchEQToMix(eqFx, 0, mixerB, FX_INDEX_EQ - 4),
+      patchEQToMix(eqFx, 0, mixerA, FX_INDEX_EQ),
       patchInToDIST(in, 0, distFx, 0),
-      patchDISTToMix(distFx, 0, mixerB, FX_INDEX_DIST - 4),
+      patchDISTToMix(distFx, 0, mixerA, FX_INDEX_DIST),
       patchMixAToOut0(mixerA, 0, out, 0),
       patchMixBToOut1(mixerB, 0, out, 1),
       activeEffect(0),
@@ -215,33 +212,15 @@ EffectMixer8::EffectMixer8(void)
     out.gain(1, 1.0f);
     in.gain(1.0f);
     
-    // Default effect settings
-    reverbFx.roomsize(0.5f);
-    reverbFx.damping(0.5f);
-    
-    // Initialize chorus with delay buffer
-    chorusFx.begin(chorusBuffer, CHORUS_BUFFER_SIZE, 2);
-    chorusFx.voices(2);
-    chorusVoices = 2;
-    setChorusDelay(60);
+   
+   
     
     // Initialize EQ on stage 0
     eqFx.setBandpass(0, 1000.0f, 0.5f);
     
-    distGain = 400.0f;
-    distBias = 0.0f;
-    distBiasTanh = tanhf(distBias);
-    distMaxOutput = 0.1f;
-    
-    for (int i = 0; i < SHAPE_LEN; i++) {
-        float in = 2.0f * (float)i / (float)(SHAPE_LEN - 1) - 1.0f; // -1.0 to 1.0
-        shape_lut[i] = 0.5f*distMaxOutput * (tanh(distGain * (in + distBias)) - distBiasTanh);
-    }
-    distFx.shape(shape_lut, SHAPE_LEN); // Default waveshaper amount
     
     // Disable all e ffects initially
-    chorusFx.disable();
-    reverbFx.disable();
+    
     rectifierFx.disable();
     eqFx.disable();
     distFx.disable();
@@ -281,16 +260,7 @@ void EffectMixer8::setActiveEffect(uint8_t effectIndex) {
     }
     
     switch (effectIndex) {
-        case FX_INDEX_CHORUS:
-            setEffectEnabled(FX_INDEX_CHORUS, true);
-            gain(0, 1.0f - wetDry);           // dry input
-            gain(FX_INDEX_CHORUS, wetDry);    // wet chorus
-            break;
-        case FX_INDEX_REVERB:
-            setEffectEnabled(FX_INDEX_REVERB, true);
-            gain(0, 1.0f - wetDry);           // dry input
-            gain(FX_INDEX_REVERB, wetDry);    // wet reverb
-            break;
+        
         case FX_INDEX_RECTIFIER:
             setEffectEnabled(FX_INDEX_RECTIFIER, true);
             gain(0, 1.0f - wetDry);           // dry input
@@ -331,12 +301,7 @@ void EffectMixer8::setWetDryMix(float32_t wetDryLevel) {
 
 void EffectMixer8::setEffectEnabled(uint8_t effectIndex, boolean enable) {
     switch (effectIndex) {
-        case FX_INDEX_CHORUS:
-            enable ? chorusFx.enable() : chorusFx.disable();
-            break;
-        case FX_INDEX_REVERB:
-            enable ? reverbFx.enable() : reverbFx.disable();
-            break;
+        
         case FX_INDEX_RECTIFIER:
             enable ? rectifierFx.enable() : rectifierFx.disable();
             break;
@@ -351,24 +316,7 @@ void EffectMixer8::setEffectEnabled(uint8_t effectIndex, boolean enable) {
     }
 }
 
-void EffectMixer8::setChorusVoices(int numVoices) {
-    if (numVoices < 1) numVoices = 1;
-    chorusVoices = numVoices;
-    chorusFx.voices(numVoices);
-}
 
-void EffectMixer8::setChorusDelay(int delaySamples) {
-    // Clamp requested size
-    if (delaySamples < 20) delaySamples = 20;
-    if (delaySamples > CHORUS_BUFFER_SIZE) delaySamples = CHORUS_BUFFER_SIZE;
-    // Re-init chorus using same preallocated buffer and current voice count
-    chorusFx.begin(chorusBuffer, delaySamples, chorusVoices);
-}
-
-void EffectMixer8::setReverbParams(float roomsize, float damping) {
-    reverbFx.roomsize(roomsize);
-    reverbFx.damping(damping);
-}
 
 void EffectMixer8::setEQ(uint32_t stage, const char *type, float frequency, float qOrGain) {
     if (type == nullptr) return;

@@ -1,5 +1,5 @@
 #include "audio_driver.h"
-#include <SdFat.h>
+
 #include <Wire.h>
 #include <SPI.h>
 #include <lvgl.h>
@@ -17,73 +17,20 @@
 unsigned long last_lvgl_tick_ms = 0;
 SdFs sd; // SD card object
 // GUItool: begin automatically generated code
-AudioInputTDM            tdm1;           
-AudioOutputTDM           tdm2;          
-EffectMixer8           stage1[7];             //xy=120,256
-AudioFilterFIR          cabIR;              //xy=330,150
-AudioMixer4              cabMix;             //xy=480,150
-AudioMixer4              monoMix1;
-AudioMixer4              monoMix2;
-AudioMixer4              monoMixOut;
-AudioMixer4              stageMix1;
-AudioMixer4              stageMix2;
-AudioMixer4              stageMixOut;
 
-
-AudioConnection        patchMono0(tdm1, 0, monoMix1, 0); //xy=198,303
-AudioConnection        patchMono1(tdm1, 2, monoMix1, 1); //xy=198,303
-AudioConnection        patchMono2(tdm1, 4, monoMix1, 2); //xy=198,303
-AudioConnection        patchMono3(tdm1, 6, monoMix1, 3); //xy=198,303
-AudioConnection        patchMono4(tdm1, 8, monoMix2, 0); //xy=198,303
-AudioConnection        patchMono5(tdm1, 10, monoMix2, 1); //xy=198,303
-AudioConnection        patchMono6(monoMix1, 0, monoMixOut, 0); //xy=198,303
-AudioConnection        patchMono7(monoMix2, 0, monoMixOut, 1); //xy=198,303
-
-AudioConnection        patchStage10(monoMixOut, 0, stage1[0].in, 0); //xy=198,303
-AudioConnection        patchStage11(tdm1, 0, stage1[1].in, 0); //xy=198,303
-AudioConnection        patchStage12(tdm1, 2, stage1[2].in, 0); //xy=198,303 
-AudioConnection        patchStage13(tdm1, 4, stage1[3].in, 0); //xy=198,303
-AudioConnection        patchStage14(tdm1, 6, stage1[4].in, 0); //xy=198,303
-AudioConnection        patchStage15(tdm1, 8, stage1[5].in, 0); //xy=198,303
-AudioConnection        patchStage16(tdm1, 10,stage1[6].in, 0); //xy=198,303
-
-
-AudioConnection        patchstageOut0(stage1[0].out, 0, stageMix1, 0); //xy=198,303
-AudioConnection        patchstageOut1(stage1[1].out, 0, stageMix1, 1); //xy=198,303
-AudioConnection        patchstageOut2(stage1[2].out, 0, stageMix1, 2); //xy=198,303
-AudioConnection        patchstageOut3(stage1[3].out, 0, stageMix1, 3); //xy=198,303
-AudioConnection        patchstageOut4(stage1[4].out, 0, stageMix2, 0); //xy=198,303
-AudioConnection        patchstageOut5(stage1[5].out, 0, stageMix2, 1); //xy=198,303
-AudioConnection        patchstageOut6(stage1[6].out, 0, stageMix2, 2); //xy=198,303
-
-AudioConnection        patchstageOut7(stageMix1, 0, stageMixOut, 0); //xy=198,303
-AudioConnection        patchstageOut8(stageMix2, 0, stageMixOut, 1); //xy=198,303
-
-
-AudioConnection        patchIR(stageMixOut, 0, cabIR, 0); //xy=198,303
-AudioConnection        patchOut(cabIR, 0, cabMix, 1); //xy=198,303
-AudioConnection        patchOuttstr(tdm1, 0, cabMix, 2); //xy=198,303
-
-AudioConnection        patchCabMixLeft(stageMixOut, 0, cabMix, 0); //xy=198,303
-AudioConnection        patchToTDMOut(cabMix, 0, tdm2, 0); //xy=198,303
-AudioControlCS42448      cs42448_1;      //xy=273,405
-
-// GUItool: end automatically generated code
-const int16_t cabIRTaps = 2000;
-int16_t cabIRCoeffs[cabIRTaps];
-uint8_t effctidx = 0;
-uint8_t change_effect = 0;
 
 #define BUTTON1_PIN 32
 #define BUTTON2_PIN 31
+uint8_t effctidx = 0;
+uint8_t change_effect = 0;
 bool button1;
 bool button2;
 float distGain;
 float distBias;
 float distBiasTanh;
 float distMaxOutput;
-const uint16_t SHAPE_LEN = 2049;
-float shape_lut[SHAPE_LEN];
+
+DMAMEM float shape_lut[SHAPE_LEN];
 
 // Load a 16-bit PCM WAV from SD, convert to mono Q15 and install in FIR.
 // - path: "/IR.WAV"
@@ -116,7 +63,7 @@ void stringMixersInit(void){
   monoMixOut.gain(1, 1.0);
   stageMix1.gain(0, 0.0);
   stageMix1.gain(1, 1.0);
-  stageMix1.gain(2, 1.0);
+  stageMix1.gain(2, 1.0); 
   stageMix1.gain(3, 1.0);
   stageMix2.gain(0, 1.0);
   stageMix2.gain(1, 1.0);
@@ -126,30 +73,13 @@ void stringMixersInit(void){
   stageMixOut.gain(1, 1.0);
 }
 
-void stageInit(void){
-  distGain = 400.0f;
-  distBias = 0.0f;
-  distBiasTanh = tanhf(distBias);
-  distMaxOutput = 0.1f;
-  for (int j = 0; j < SHAPE_LEN; j++) {
-      float in = 2.0f * (float)j / (float)(SHAPE_LEN - 1) - 1.0f; // -1.0 to 1.0
-      shape_lut[j] = 0.5f*distMaxOutput * (tanh(distGain * (in + distBias)) - distBiasTanh);
-  }
 
-  for (int i = 0; i < 7; i++) {
-    
-    stage1[i].distFx.shape(shape_lut, SHAPE_LEN); // Default waveshaper amount
-    
-    stage1[i].setWetDryMix(0.0f); // Dry by default
-    stage1[i].setActiveEffect(0); // Bypass by default
-  }
-}
 
 void setup() {
-  AudioMemory(1000);
-  delay(1000);
+  AudioMemory(200);
+  delay(2000);
   Serial.begin(115200);
-  int taps = load_wav_to_fir("Brohymn Mesa 4x12 SM57 V30 1.wav", cabIR, 200, cabIRTaps, sd);
+  int taps = load_wav_to_fir("Brohymn Mesa 4x12 SM57 V30 1.wav", cabIR, 200, CAB_IR_TAPS, sd);
   if (taps > 0) { 
   Serial.println("IR ready");
 } else {
@@ -165,7 +95,7 @@ sd.end();
     Serial.println("Audio Codec CS42448 initialized.");
   }
   Serial.println(AUDIO_SAMPLE_RATE_EXACT);
-  stageInit();
+  setStageDistInit(stage1);
   stringMixersInit();
   // ----------------------------------------------------
     // *** CRITICAL TEENSY 4.1 SPI INITIALIZATION ***
@@ -211,35 +141,4 @@ void loop() {
         button2 = !digitalRead(BUTTON2_PIN);
     }
 
-  if (millis() % 1000 == 0 && change_effect == 1)
-  {
-    change_effect = 0;
-    if (button1)
-    {
-      effctidx ++;
-    }
-    
-    
-    if (button2)
-    {
-      cabIREnable(!cabIR.isEnabled());
-    }
-    for (int i = 0; i < 7; i++) {
-      stage1[i].setActiveEffect(effctidx % 6);
-      stage1[i].setWetDryMix(0.9f);
-    }
-    Serial.print("Active Effect Index: ");
-    Serial.print(stage1[1].getActiveEffect());
-    Serial.print("   Cab IR: ");
-    Serial.println(cabIR.isEnabled() ? "Enabled" : "Disabled");
-    
-    
-  }
-  else if (millis() % 1000 > 500 && millis() % 1000 < 510)
-  {
-    change_effect = 1;
-
-
-  }
 }
-

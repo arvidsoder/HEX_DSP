@@ -6,8 +6,8 @@ ILI9341_t3n tft = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST);
 
 // LVGL needs two buffers for smooth, tearing-free drawing (about 1/12th screen area)
 static lv_disp_draw_buf_t draw_buf;
-static lv_color_t buf1[320 * 20];   
-static lv_color_t buf2[320 * 20];
+DMAMEM static lv_color_t buf1[320 * 20];   
+DMAMEM static lv_color_t buf2[320 * 20];
 
 // LVGL Display Flush Callback
 static void my_disp_flush(lv_disp_drv_t *disp,

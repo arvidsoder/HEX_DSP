@@ -1,0 +1,9 @@
+C:/Users/Arvid/Documents/PlatformIO/Projects/HEX_DSP/build/CMakeFiles/lvgl.dir
+C:/Users/Arvid/Documents/PlatformIO/Projects/HEX_DSP/build/CMakeFiles/lvgl_examples.dir
+C:/Users/Arvid/Documents/PlatformIO/Projects/HEX_DSP/build/CMakeFiles/lvgl_demos.dir
+C:/Users/Arvid/Documents/PlatformIO/Projects/HEX_DSP/build/CMakeFiles/edit_cache.dir
+C:/Users/Arvid/Documents/PlatformIO/Projects/HEX_DSP/build/CMakeFiles/rebuild_cache.dir
+C:/Users/Arvid/Documents/PlatformIO/Projects/HEX_DSP/build/CMakeFiles/list_install_components.dir
+C:/Users/Arvid/Documents/PlatformIO/Projects/HEX_DSP/build/CMakeFiles/install.dir
+C:/Users/Arvid/Documents/PlatformIO/Projects/HEX_DSP/build/CMakeFiles/install/local.dir
+C:/Users/Arvid/Documents/PlatformIO/Projects/HEX_DSP/build/CMakeFiles/install/strip.dir

@@ -1,12 +1,19 @@
-SET(SOURCES ui_Menu.c
-    ui_ScreenEffects.c
-    ui_InputGain.c
-    ui_OutputLevel.c
-    ui_System.c
-    ui_Effectchain.c
+SET(SOURCES ui_LabelInputTitle.c
+    ui_OutputBack.c
+    ui_TitleMenuHeader.c
+    ui_ScreenPresetsMenu.c
+    ui_DifferentEffects.c
+    ui_PanelEditHeader.c
+    ui_ScreenEffectSelector.c
     ui.c
     ui_comp_hook.c
     ui_helpers.c
-    ui_img_1618134784.c)
+    ui_events.c
+    ui_img_1618134784.c
+    ui_img_add_60dp_ffffff_fill0_wght400_grad0_opsz48_png.c
+    ui_img_discover_tune_45dp_ffffff_fill0_wght400_grad0_opsz48_png.c
+    ui_img_add_link_45dp_ffffff_fill0_wght400_grad0_opsz48_png.c
+    ui_img_cancel_80dp_ffffff_fill0_wght400_grad0_opsz48_png.c
+    ui_img_check_circle_80dp_ffffff_fill0_wght400_grad0_opsz48_png.c)
 
 add_library(ui ${SOURCES})

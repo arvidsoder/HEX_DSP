@@ -33,22 +33,24 @@ void ui_init(void)
     lv_theme_t * theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
                                                false, LV_FONT_DEFAULT);
     lv_disp_set_theme(dispp, theme);
-    ui_Menu_screen_init();
-    ui_ScreenEffects_screen_init();
-    ui_InputGain_screen_init();
-    ui_OutputLevel_screen_init();
-    ui_System_screen_init();
-    ui_Effectchain_screen_init();
+    ui_LabelInputTitle_screen_init();
+    ui_OutputBack_screen_init();
+    ui_TitleMenuHeader_screen_init();
+    ui_ScreenPresetsMenu_screen_init();
+    ui_DifferentEffects_screen_init();
+    ui_PanelEditHeader_screen_init();
+    ui_ScreenEffectSelector_screen_init();
     ui____initial_actions0 = lv_obj_create(NULL);
-    lv_disp_load_scr(ui_Menu);
+    lv_disp_load_scr(ui_LabelInputTitle);
 }
 
 void ui_destroy(void)
 {
-    ui_Menu_screen_destroy();
-    ui_ScreenEffects_screen_destroy();
-    ui_InputGain_screen_destroy();
-    ui_OutputLevel_screen_destroy();
-    ui_System_screen_destroy();
-    ui_Effectchain_screen_destroy();
+    ui_LabelInputTitle_screen_destroy();
+    ui_OutputBack_screen_destroy();
+    ui_TitleMenuHeader_screen_destroy();
+    ui_ScreenPresetsMenu_screen_destroy();
+    ui_DifferentEffects_screen_destroy();
+    ui_PanelEditHeader_screen_destroy();
+    ui_ScreenEffectSelector_screen_destroy();
 }

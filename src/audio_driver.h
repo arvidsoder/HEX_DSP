@@ -1,7 +1,21 @@
 #pragma once
 
+#ifdef __cplusplus
 #include <Audio.h>
+#include <SdFat.h>
+#else
+#include <stdint.h>
+#include <stdbool.h>
+#endif
 
+// GUItool: end automatically generated code
+#define CAB_IR_TAPS 2000
+#define SHAPE_LEN 2049
+extern int16_t cabIRCoeffs[CAB_IR_TAPS];
+
+#define DIST_INGAIN_DEFAULT    400.0f
+#define DIST_BIAS_DEFAULT      0.0f
+#define DIST_MAXOUTPUT_DEFAULT 0.1f
 
 // Effect indices for setActiveEffect()
 
@@ -9,13 +23,13 @@
 #define FX_INDEX_EQ          2
 #define FX_INDEX_DIST        3
 
-
-static int resample_linear(float *src, int srcLen, uint32_t srcRate, uint32_t dstRate, 
+#ifdef __cplusplus
+int resample_linear(float *src, int srcLen, uint32_t srcRate, uint32_t dstRate, 
                            float *out, int maxOut);
 
 int load_wav_to_fir(const char *path, AudioFilterFIR &fir, int maxDurationMs, int maxTaps, SdFs &sd, uint8_t csPin = BUILTIN_SDCARD);
 
-/**
+/**how
  * @class EffectMixer8
  * @brief Audio routing and effect management class
  * 
@@ -47,6 +61,7 @@ public:
     AudioConnection patchMixAToOut0;
     AudioConnection patchMixBToOut1;
 
+    float effectParams[7][7];
     /**
      * @brief Constructor - initializes mixer gains and default effect settings
      */
@@ -106,9 +121,21 @@ public:
      */
     AudioMixer4* getOutputMixer(void) { return &out; }
 
+    void setEffectParam(uint8_t effectIndex, uint8_t paramIndex, float paramValue);
+
+    void setDistParam(uint8_t paramIndex, float paramValue);
+
+    void setDistGain(float inGain);
+
+    void setDistBias(float Bias);
+
+    void setDistLevel(float outLevel);
+
 private:
     uint8_t activeEffect;  // Currently active effect index
     float32_t wetDry;      // Wet/dry mix ratio
+    
+    
     
     // Current number of chorus voices (kept so we can re-init chorus when changing delay)
 
@@ -116,4 +143,124 @@ private:
     
 };
 
+void setStageDistInit(EffectMixer8* stage) ;
 
+extern AudioInputTDM     tdm1;
+extern AudioOutputTDM    tdm2;
+extern EffectMixer8      stage1[7];
+extern EffectMixer8      stage2[7];
+extern EffectMixer8      stage3[7];
+extern EffectMixer8      stage4[7];
+extern EffectMixer8      stage5[7];
+extern EffectMixer8      stage6[7];
+extern EffectMixer8      stage7[7];
+extern AudioFilterFIR    cabIR;
+extern AudioMixer4       cabMix;
+extern AudioMixer4       monoMix1;
+extern AudioMixer4       monoMix2;
+extern AudioMixer4       monoMixOut;
+extern AudioMixer4       stageMix1;
+extern AudioMixer4       stageMix2;
+extern AudioMixer4       stageMixOut;
+extern AudioControlCS42448 cs42448_1;
+
+// ===== Audio connections =====
+extern AudioConnection patchMono0;
+extern AudioConnection patchMono1;
+extern AudioConnection patchMono2;
+extern AudioConnection patchMono3;
+extern AudioConnection patchMono4;
+extern AudioConnection patchMono5;
+extern AudioConnection patchMono6;
+extern AudioConnection patchMono7;
+
+extern AudioConnection patchStage10;
+extern AudioConnection patchStage11;
+extern AudioConnection patchStage12;
+extern AudioConnection patchStage13;
+extern AudioConnection patchStage14;
+extern AudioConnection patchStage15;
+extern AudioConnection patchStage16;
+
+extern AudioConnection patchstageOut0;
+extern AudioConnection patchstageOut1;
+extern AudioConnection patchstageOut2;
+extern AudioConnection patchstageOut3;
+extern AudioConnection patchstageOut4;
+extern AudioConnection patchstageOut5;
+extern AudioConnection patchstageOut6;
+
+extern AudioConnection patchstageOut02;    
+extern AudioConnection patchstageOut12;
+extern AudioConnection patchstageOut22;
+extern AudioConnection patchstageOut32;
+extern AudioConnection patchstageOut42;
+extern AudioConnection patchstageOut52;
+extern AudioConnection patchstageOut62;
+
+extern AudioConnection patchstageOut03;
+extern AudioConnection patchstageOut13;
+extern AudioConnection patchstageOut23;
+extern AudioConnection patchstageOut33;
+extern AudioConnection patchstageOut43;
+extern AudioConnection patchstageOut53;
+extern AudioConnection patchstageOut63;
+
+extern AudioConnection patchstageOut04;
+extern AudioConnection patchstageOut14;
+extern AudioConnection patchstageOut24;
+extern AudioConnection patchstageOut34;
+extern AudioConnection patchstageOut44;
+extern AudioConnection patchstageOut54;
+extern AudioConnection patchstageOut64;
+
+
+extern AudioConnection patchstageOut05; 
+extern AudioConnection patchstageOut15;
+extern AudioConnection patchstageOut25;
+extern AudioConnection patchstageOut35;
+extern AudioConnection patchstageOut45;
+extern AudioConnection patchstageOut55;
+extern AudioConnection patchstageOut65;
+
+extern AudioConnection patchstageOut06; 
+extern AudioConnection patchstageOut16;
+extern AudioConnection patchstageOut26;
+extern AudioConnection patchstageOut36;
+extern AudioConnection patchstageOut46;
+extern AudioConnection patchstageOut56;
+extern AudioConnection patchstageOut66;
+
+extern AudioConnection patchstageOut07; 
+extern AudioConnection patchstageOut17;
+extern AudioConnection patchstageOut27;
+extern AudioConnection patchstageOut37;
+extern AudioConnection patchstageOut47;
+extern AudioConnection patchstageOut57;
+extern AudioConnection patchstageOut67;
+
+
+
+extern AudioConnection patchstageOut7;
+extern AudioConnection patchstageOut8;
+
+extern AudioConnection patchIR;
+extern AudioConnection patchOut;
+extern AudioConnection patchOuttstr;
+extern AudioConnection patchCabMixLeft;
+extern AudioConnection patchToTDMOut;
+#endif // __cplusplus
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void setStageEffect(uint8_t slotIndex, uint8_t effectIndex);
+
+void setStageParameter(uint8_t slotIndex, uint8_t effectIndex, uint8_t paramIndex, float paramValue);
+
+void setMasterOutputLevel(float level);
+
+#ifdef __cplusplus
+}
+#endif

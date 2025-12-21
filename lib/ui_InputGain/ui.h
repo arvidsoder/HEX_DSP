@@ -27,22 +27,35 @@ extern "C" {
 
 ///////////////////// SCREENS ////////////////////
 
-#include "ui_Menu.h"
-#include "ui_ScreenEffects.h"
-#include "ui_InputGain.h"
-#include "ui_OutputLevel.h"
-#include "ui_System.h"
-#include "ui_Effectchain.h"
+#include "ui_LabelInputTitle.h"
+#include "ui_OutputBack.h"
+#include "ui_TitleMenuHeader.h"
+#include "ui_ScreenPresetsMenu.h"
+#include "ui_DifferentEffects.h"
+#include "ui_PanelEditHeader.h"
+#include "ui_ScreenEffectSelector.h"
 
 ///////////////////// VARIABLES ////////////////////
 
-
 // EVENTS
-
 extern lv_obj_t * ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE(ui_img_1618134784);    // assets/arrow_back_ios_32dp_E3E3E3_FILL0_wght400_GRAD0_opsz40 (1).png
+LV_IMG_DECLARE(ui_img_add_60dp_ffffff_fill0_wght400_grad0_opsz48_png);    // assets/add_60dp_FFFFFF_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(ui_img_discover_tune_45dp_ffffff_fill0_wght400_grad0_opsz48_png);    // assets/discover_tune_45dp_FFFFFF_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(ui_img_add_link_45dp_ffffff_fill0_wght400_grad0_opsz48_png);    // assets/add_link_45dp_FFFFFF_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(ui_img_cancel_80dp_ffffff_fill0_wght400_grad0_opsz48_png);    // assets/cancel_80dp_FFFFFF_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(ui_img_check_circle_80dp_ffffff_fill0_wght400_grad0_opsz48_png);    // assets/check_circle_80dp_FFFFFF_FILL0_wght400_GRAD0_opsz48.png
+
+// --- MANUELLT TILLAGDA IKONER (Försvinner vid ny export, måste läggas till igen) ---
+LV_IMG_DECLARE(ui_img_music_note_60dp_e3e3e3_fill0_wght400_grad0_opsz48_png);      // Reverb
+LV_IMG_DECLARE(ui_img_timer_arrow_up_60dp_e3e3e3_fill0_wght400_grad0_opsz48_png);  // Delay
+LV_IMG_DECLARE(ui_img_earthquake_60dp_e3e3e3_fill0_wght400_grad0_opsz48_png);      // Distortion
+LV_IMG_DECLARE(ui_img_cadence_60dp_e3e3e3_fill0_wght400_grad0_opsz48_png);         // Compressor
+LV_IMG_DECLARE(ui_img_wifi_channel_60dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // Chorus (Wifi icon)
+LV_IMG_DECLARE(ui_img_speaker_60dp_e3e3e3_fill0_wght400_grad0_opsz48_png);         // Amp/Cab
+LV_IMG_DECLARE(ui_img_equalizer_60dp_e3e3e3_fill0_wght400_grad0_opsz48_png);       // EQ
 
 // UI INIT
 void ui_init(void);

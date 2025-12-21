@@ -10,6 +10,16 @@
 extern "C" {
 #endif
 
+void slider_value_changed(lv_event_t * e);
+void ui_event_BtnPreset1(lv_event_t * e);
+void ui_event_BtnPreset2(lv_event_t * e);
+void ui_event_BtnPreset3(lv_event_t * e);
+void SelectActiveSlot(lv_event_t * e);
+void OnBtnEditParamsClicked(lv_event_t * e);
+void OnBtnReplaceClicked(lv_event_t * e);
+void UpdateSlotEffect(lv_event_t * e);
+void ui_event_CheckboxMono(lv_event_t * e);
+
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif

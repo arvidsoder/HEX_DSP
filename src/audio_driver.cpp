@@ -2,7 +2,9 @@
 #include <math.h>
 #include "audio_driver.h"
 
-
+// DMAMEM int16_t cabIRCoeffs[CAB_IR_TAPS]; // Removed unused array to save memory
+// Access the global shape_lut defined in main.cpp to save stack/RAM1 and ensure persistence
+extern float shape_lut[SHAPE_LEN];
 
 static int resample_linear(float *src, int srcLen, uint32_t srcRate, uint32_t dstRate, 
                            float *out, int maxOut) {
@@ -201,7 +203,13 @@ EffectMixer8::EffectMixer8(void)
       patchMixAToOut0(mixerA, 0, out, 0),
       patchMixBToOut1(mixerB, 0, out, 1),
       activeEffect(0),
-      wetDry(1.0f)
+      wetDry(1.0f), effectParams{{0, 0, 0, 0, 0, 0, 0},
+                                 {0, 0, 0, 0, 0, 0, 0},
+                                 {1, 0, 1, 0, 0, 0, 0},
+                                 {0, 0, 0, 0, 0, 0, 0},
+                                 {0, 0, 0, 0, 0, 0, 0},
+                                 {0, 0, 0, 0, 0, 0, 0},
+                                 {0, 0, 0, 0, 0, 0, 0}}
 {
     // Initialize mixer gains
     for (int i = 0; i < 4; i++) {
@@ -212,7 +220,7 @@ EffectMixer8::EffectMixer8(void)
     out.gain(1, 1.0f);
     in.gain(1.0f);
     
-   
+    
    
     
     // Initialize EQ on stage 0
@@ -224,6 +232,7 @@ EffectMixer8::EffectMixer8(void)
     rectifierFx.disable();
     eqFx.disable();
     distFx.disable();
+    
     
 }
 
@@ -333,10 +342,252 @@ void EffectMixer8::setEQ(uint32_t stage, const char *type, float frequency, floa
         eqFx.setLowShelf(stage, frequency, qOrGain);
     } else if (strcmp(type, "highshelf") == 0) {
         eqFx.setHighShelf(stage, frequency, qOrGain);
-    }
     
+    }
+
+}
+
+void EffectMixer8::setDistParam(uint8_t paramIndex, float paramValue) {
+    switch (paramIndex) {
+        case 0: // Gain
+            effectParams[FX_INDEX_DIST][0] = paramValue;
+            setInputGain(paramValue);
+            break;
+        case 1: // Bias
+            effectParams[FX_INDEX_DIST][1] = paramValue;
+            break;
+        case 2: // MaxOutput
+            effectParams[FX_INDEX_DIST][2] = paramValue;
+            gain(FX_INDEX_DIST, paramValue);
+            break;
+    }
+}
+
+void EffectMixer8::setEffectParam(uint8_t effectIndex, uint8_t paramIndex, float paramValue) {
+  if ((paramIndex == 6)&&(effectIndex != 7)) { // Wet/Dry Mix
+            setWetDryMix(paramValue);
+            return;
+        }    
+  switch (effectIndex) {
+        case FX_INDEX_RECTIFIER:
+            
+            break;
+        case FX_INDEX_DIST:
+            setDistParam(paramIndex, paramValue);
+
+            break;
+        default:
+            break;
+    }
 }
 
 
 
+void setStageDistInit(EffectMixer8* stage) {
+  float distBiasTanh = tanhf(DIST_BIAS_DEFAULT);
+  // float shape_lut[SHAPE_LEN]; // REMOVED: Do not shadow the global variable!
+  // Use global shape_lut (in DMAMEM) instead of local stack variable
+  for (int j = 0; j < SHAPE_LEN; j++) {
+      float in = 2.0f * (float)j / (float)(SHAPE_LEN - 1) - 1.0f; // -1.0 to 1.0
+      shape_lut[j] = 0.5f*DIST_MAXOUTPUT_DEFAULT * (tanh(DIST_INGAIN_DEFAULT * (in + DIST_BIAS_DEFAULT)) - distBiasTanh);
+  }
 
+  for (int i = 0; i < 7; i++) {
+  
+    stage[i].distFx.shape(shape_lut, SHAPE_LEN); // Default waveshaper amount
+    
+  }
+}
+
+DMAMEM AudioInputTDM     tdm1;
+DMAMEM AudioOutputTDM    tdm2;
+DMAMEM EffectMixer8      stage1[7];
+DMAMEM EffectMixer8      stage2[7];
+DMAMEM EffectMixer8      stage3[7];
+DMAMEM EffectMixer8      stage4[7];
+DMAMEM EffectMixer8      stage5[7];
+DMAMEM EffectMixer8      stage6[7];
+DMAMEM EffectMixer8      stage7[7];
+DMAMEM AudioAmplifier   masterAmp;
+
+DMAMEM AudioFilterFIR    cabIR;
+DMAMEM AudioMixer4       cabMix;
+DMAMEM AudioMixer4       monoMix1;
+DMAMEM AudioMixer4       monoMix2;
+DMAMEM AudioMixer4       monoMixOut;
+DMAMEM AudioMixer4       stageMix1;
+DMAMEM AudioMixer4       stageMix2;
+DMAMEM AudioMixer4       stageMixOut;
+DMAMEM AudioControlCS42448 cs42448_1;
+
+// ===== Audio connections =====
+DMAMEM AudioConnection patchMono0(tdm1, 0, monoMix1, 0);
+DMAMEM AudioConnection patchMono1(tdm1, 2, monoMix1, 1);
+DMAMEM AudioConnection patchMono2(tdm1, 4, monoMix1, 2);
+DMAMEM AudioConnection patchMono3(tdm1, 6, monoMix1, 3);
+DMAMEM AudioConnection patchMono4(tdm1, 8, monoMix2, 0);
+DMAMEM AudioConnection patchMono5(tdm1, 10, monoMix2, 1);
+DMAMEM AudioConnection patchMono6(monoMix1, 0, monoMixOut, 0);
+DMAMEM AudioConnection patchMono7(monoMix2, 0, monoMixOut, 1);
+
+DMAMEM AudioConnection patchStage10(monoMixOut, 0, stage1[0].in, 0);
+DMAMEM AudioConnection patchStage11(tdm1, 0, stage1[1].in, 0);
+DMAMEM AudioConnection patchStage12(tdm1, 2, stage1[2].in, 0);
+DMAMEM AudioConnection patchStage13(tdm1, 4, stage1[3].in, 0);
+DMAMEM AudioConnection patchStage14(tdm1, 6, stage1[4].in, 0);
+DMAMEM AudioConnection patchStage15(tdm1, 8, stage1[5].in, 0);
+DMAMEM AudioConnection patchStage16(tdm1, 10, stage1[6].in, 0);
+
+DMAMEM AudioConnection patchstageOut0(stage1[0].out, 0, stage2[0].in, 0);
+DMAMEM AudioConnection patchstageOut1(stage1[1].out, 0, stage2[1].in, 0);
+DMAMEM AudioConnection patchstageOut2(stage1[2].out, 0, stage2[2].in, 0);
+DMAMEM AudioConnection patchstageOut3(stage1[3].out, 0, stage2[3].in, 0);
+DMAMEM AudioConnection patchstageOut4(stage1[4].out, 0, stage2[4].in, 0);
+DMAMEM AudioConnection patchstageOut5(stage1[5].out, 0, stage2[5].in, 0);
+DMAMEM AudioConnection patchstageOut6(stage1[6].out, 0, stage2[6].in, 0);
+
+DMAMEM AudioConnection patchstageOut02(stage2[0].out, 0, stage3[0].in, 0);
+DMAMEM AudioConnection patchstageOut12(stage2[1].out, 0, stage3[1].in, 0);
+DMAMEM AudioConnection patchstageOut22(stage2[2].out, 0, stage3[2].in, 0);
+DMAMEM AudioConnection patchstageOut32(stage2[3].out, 0, stage3[3].in, 0);
+DMAMEM AudioConnection patchstageOut42(stage2[4].out, 0, stage3[4].in, 0);
+DMAMEM AudioConnection patchstageOut52(stage2[5].out, 0, stage3[5].in, 0);
+DMAMEM AudioConnection patchstageOut62(stage2[6].out, 0, stage3[6].in, 0);
+
+DMAMEM AudioConnection patchstageOut03(stage3[0].out, 0, stage4[0].in, 0);
+DMAMEM AudioConnection patchstageOut13(stage3[1].out, 0, stage4[1].in, 0);
+DMAMEM AudioConnection patchstageOut23(stage3[2].out, 0, stage4[2].in, 0);
+DMAMEM AudioConnection patchstageOut33(stage3[3].out, 0, stage4[3].in, 0);
+DMAMEM AudioConnection patchstageOut43(stage3[4].out, 0, stage4[4].in, 0);
+DMAMEM AudioConnection patchstageOut53(stage3[5].out, 0, stage4[5].in, 0);
+DMAMEM AudioConnection patchstageOut63(stage3[6].out, 0, stage4[6].in, 0);
+
+DMAMEM AudioConnection patchstageOut04(stage4[0].out, 0, stage5[0].in, 0);
+DMAMEM AudioConnection patchstageOut14(stage4[1].out, 0, stage5[1].in, 0);
+DMAMEM AudioConnection patchstageOut24(stage4[2].out, 0, stage5[2].in, 0);
+DMAMEM AudioConnection patchstageOut34(stage4[3].out, 0, stage5[3].in, 0);
+DMAMEM AudioConnection patchstageOut44(stage4[4].out, 0, stage5[4].in, 0);
+DMAMEM AudioConnection patchstageOut54(stage4[5].out, 0, stage5[5].in, 0);
+DMAMEM AudioConnection patchstageOut64(stage4[6].out, 0, stage5[6].in, 0);
+
+DMAMEM AudioConnection patchstageOut05(stage5[0].out, 0, stage6[0].in, 0);
+DMAMEM AudioConnection patchstageOut15(stage5[1].out, 0, stage6[1].in, 0);
+DMAMEM AudioConnection patchstageOut25(stage5[2].out, 0, stage6[2].in, 0);
+DMAMEM AudioConnection patchstageOut35(stage5[3].out, 0, stage6[3].in, 0);
+DMAMEM AudioConnection patchstageOut45(stage5[4].out, 0, stage6[4].in, 0);
+DMAMEM AudioConnection patchstageOut55(stage5[5].out, 0, stage6[5].in, 0);
+DMAMEM AudioConnection patchstageOut65(stage5[6].out, 0, stage6[6].in, 0);
+
+DMAMEM AudioConnection patchstageOut06(stage6[0].out, 0, stage7[0].in, 0);
+DMAMEM AudioConnection patchstageOut16(stage6[1].out, 0, stage7[1].in, 0);
+DMAMEM AudioConnection patchstageOut26(stage6[2].out, 0, stage7[2].in, 0);
+DMAMEM AudioConnection patchstageOut36(stage6[3].out, 0, stage7[3].in, 0);
+DMAMEM AudioConnection patchstageOut46(stage6[4].out, 0, stage7[4].in, 0);
+DMAMEM AudioConnection patchstageOut56(stage6[5].out, 0, stage7[5].in, 0);
+DMAMEM AudioConnection patchstageOut66(stage6[6].out, 0, stage7[6].in, 0);
+
+
+DMAMEM AudioConnection patchstageOut07(stage7[0].out, 0, stageMix1, 0);
+DMAMEM AudioConnection patchstageOut17(stage7[1].out, 0, stageMix1, 1);
+DMAMEM AudioConnection patchstageOut27(stage7[2].out, 0, stageMix1, 2);
+DMAMEM AudioConnection patchstageOut37(stage7[3].out, 0, stageMix1, 3);
+DMAMEM AudioConnection patchstageOut47(stage7[4].out, 0, stageMix2, 0);
+DMAMEM AudioConnection patchstageOut57(stage7[5].out, 0, stageMix2, 1);
+DMAMEM AudioConnection patchstageOut67(stage7[6].out, 0, stageMix2, 2);
+
+DMAMEM AudioConnection patchstageOut7(stageMix1, 0, stageMixOut, 0);
+DMAMEM AudioConnection patchstageOut8(stageMix2, 0, stageMixOut, 1);
+
+DMAMEM AudioConnection patchIR(stageMixOut, 0, cabIR, 0);
+DMAMEM AudioConnection patchOut(cabIR, 0, cabMix, 1);
+DMAMEM AudioConnection patchCabMixLeft(stageMixOut, 0, cabMix, 0);
+DMAMEM AudioConnection patchToTDMOut(cabMix, 0, masterAmp, 0);
+DMAMEM AudioConnection patchToTDMOut2(masterAmp, 0, tdm2, 0);
+
+void setStageEffect(uint8_t slotIndex, uint8_t effectIndex) {
+    switch (slotIndex) {
+        case 0:
+        for (int i = 0; i < 7; i++) {
+            stage1[i].setActiveEffect(effectIndex);
+        }
+            break;
+        case 1:
+        for (int i = 0; i < 7; i++) {
+            stage2[i].setActiveEffect(effectIndex);
+        }
+            break;
+        case 2:
+        for (int i = 0; i < 7; i++) {
+            stage3[i].setActiveEffect(effectIndex);
+        }
+            break;
+        case 3:
+        for (int i = 0; i < 7; i++) {
+            stage4[i].setActiveEffect(effectIndex);
+        }
+            break;
+        case 4:
+        for (int i = 0; i < 7; i++) {
+            stage5[i].setActiveEffect(effectIndex);
+        }
+            break;
+        case 5:
+        for (int i = 0; i < 7; i++) {
+            stage6[i].setActiveEffect(effectIndex);
+        }
+            break;
+        case 6:
+        for (int i = 0; i < 7; i++) {
+            stage7[i].setActiveEffect(effectIndex);
+        }
+            break;
+        default:
+            break;
+    }
+}
+
+void setStageParameter(uint8_t slotIndex, uint8_t effectIndex, uint8_t paramIndex, float paramValue) {
+    switch (slotIndex) {
+        case 0:
+        for (int i = 0; i < 7; i++) {
+            stage1[i].setEffectParam(effectIndex, paramIndex, paramValue);
+        }
+            break;
+        case 1:
+        for (int i = 0; i < 7; i++) {
+            stage2[i].setEffectParam(effectIndex, paramIndex, paramValue);
+        }
+            break;
+        case 2:
+        for (int i = 0; i < 7; i++) {
+            stage3[i].setEffectParam(effectIndex, paramIndex, paramValue);
+        }
+            break;
+        case 3:
+        for (int i = 0; i < 7; i++) {
+            stage4[i].setEffectParam(effectIndex, paramIndex, paramValue);
+        }
+            break;
+        case 4:
+        for (int i = 0; i < 7; i++) {
+            stage5[i].setEffectParam(effectIndex, paramIndex, paramValue);
+        }
+            break;
+        case 5:
+        for (int i = 0; i < 7; i++) {
+            stage6[i].setEffectParam(effectIndex, paramIndex, paramValue);
+        }
+            break;
+        case 6:
+        for (int i = 0; i < 7; i++) {
+            stage7[i].setEffectParam(effectIndex, paramIndex, paramValue);
+        }
+            break;
+        default:
+            break;
+    }
+}
+
+void setMasterOutputLevel(float level) {
+    masterAmp.gain(level);
+}

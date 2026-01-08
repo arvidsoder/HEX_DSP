@@ -30,16 +30,16 @@ static void my_touch_read(lv_indev_drv_t *indev, lv_indev_data_t *data)
     
     // Step 1: Check for touch. This is a SPI operation and must be isolated.
     // Use SPISettings optimized for the XPT2046 (low speed, SPI_MODE0)
-    SPI.beginTransaction(SPISettings(XPT2046_SPI_SPEED, MSBFIRST, SPI_MODE0));
+    SPI1.beginTransaction(SPISettings(XPT2046_SPI_SPEED, MSBFIRST, SPI_MODE0));
     bool is_touching = ts.touched();
-    SPI.endTransaction();
+    SPI1.endTransaction();
     
     if (is_touching) {
         
         // Step 2: Read touch point. This is also a SPI operation.
-        SPI.beginTransaction(SPISettings(XPT2046_SPI_SPEED, MSBFIRST, SPI_MODE0));
+        SPI1.beginTransaction(SPISettings(XPT2046_SPI_SPEED, MSBFIRST, SPI_MODE0));
         p = ts.getPoint(); 
-        SPI.endTransaction();
+        SPI1.endTransaction();
         
         // Check Z-pressure for a valid touch
         if (p.z < Z_RAW_THRESHOLD) { 
@@ -81,7 +81,7 @@ void touch_driver_init()
     
     // Initialize the touch hardware, explicitly passing the default SPI object
     // This allows the touch library to manage the SPI bus settings
-    ts.begin(SPI);
+    ts.begin(SPI1);
     
     // Initialize the LVGL input device structure
     static lv_indev_drv_t indev_drv;

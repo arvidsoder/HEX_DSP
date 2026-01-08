@@ -13,7 +13,7 @@
 #define SHAPE_LEN 2049
 extern int16_t cabIRCoeffs[CAB_IR_TAPS];
 
-#define DIST_INGAIN_DEFAULT    400.0f
+#define DIST_INGAIN_DEFAULT    1.0f
 #define DIST_BIAS_DEFAULT      0.0f
 #define DIST_MAXOUTPUT_DEFAULT 0.1f
 
@@ -48,7 +48,10 @@ public:
     
     AudioEffectRectifier rectifierFx;   // Rectifier effect (channel 3)
     AudioFilterBiquad eqFx;             // EQ/Biquad filter (channel 4)
+
+    AudioAmplifier distPreGain;         // Pre-distortion gain control
     AudioEffectWaveshaper distFx;               // FIR filter effect (channel 5)
+    AudioAmplifier distPostGain;        // Post-distortion gain control
     
     // Audio connections (patches)
     AudioConnection patchInToMix;
@@ -56,12 +59,14 @@ public:
     AudioConnection patchRectifierToMix;
     AudioConnection patchInToEQ;
     AudioConnection patchEQToMix;
+    AudioConnection patchInToDISTPreGain;
     AudioConnection patchInToDIST;
+    AudioConnection patchDISTPostGain;
     AudioConnection patchDISTToMix;
     AudioConnection patchMixAToOut0;
     AudioConnection patchMixBToOut1;
 
-    float effectParams[7][7];
+
     /**
      * @brief Constructor - initializes mixer gains and default effect settings
      */
@@ -259,7 +264,10 @@ void setStageEffect(uint8_t slotIndex, uint8_t effectIndex);
 
 void setStageParameter(uint8_t slotIndex, uint8_t effectIndex, uint8_t paramIndex, float paramValue);
 
+void setStageWetDry(uint8_t slotIndex, float wetDryLevel);
+
 void setMasterOutputLevel(float level);
+
 
 #ifdef __cplusplus
 }

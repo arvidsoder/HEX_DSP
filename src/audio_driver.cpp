@@ -198,18 +198,14 @@ EffectMixer8::EffectMixer8(void)
       patchRectifierToMix(rectifierFx, 0, mixerA, FX_INDEX_RECTIFIER),
       patchInToEQ(in, 0, eqFx, 0),
       patchEQToMix(eqFx, 0, mixerA, FX_INDEX_EQ),
-      patchInToDIST(in, 0, distFx, 0),
-      patchDISTToMix(distFx, 0, mixerA, FX_INDEX_DIST),
+      patchInToDISTPreGain(in, 0, distPreGain, 0),
+      patchInToDIST(distPreGain, 0, distFx, 0),
+      patchDISTPostGain(distFx, 0, distPostGain, 0),
+      patchDISTToMix(distPostGain, 0, mixerA, FX_INDEX_DIST),
       patchMixAToOut0(mixerA, 0, out, 0),
       patchMixBToOut1(mixerB, 0, out, 1),
       activeEffect(0),
-      wetDry(1.0f), effectParams{{0, 0, 0, 0, 0, 0, 0},
-                                 {0, 0, 0, 0, 0, 0, 0},
-                                 {1, 0, 1, 0, 0, 0, 0},
-                                 {0, 0, 0, 0, 0, 0, 0},
-                                 {0, 0, 0, 0, 0, 0, 0},
-                                 {0, 0, 0, 0, 0, 0, 0},
-                                 {0, 0, 0, 0, 0, 0, 0}}
+      wetDry(1.0f)
 {
     // Initialize mixer gains
     for (int i = 0; i < 4; i++) {
@@ -221,8 +217,7 @@ EffectMixer8::EffectMixer8(void)
     in.gain(1.0f);
     
     
-   
-    
+ 
     // Initialize EQ on stage 0
     eqFx.setBandpass(0, 1000.0f, 0.5f);
     
@@ -350,15 +345,15 @@ void EffectMixer8::setEQ(uint32_t stage, const char *type, float frequency, floa
 void EffectMixer8::setDistParam(uint8_t paramIndex, float paramValue) {
     switch (paramIndex) {
         case 0: // Gain
-            effectParams[FX_INDEX_DIST][0] = paramValue;
-            setInputGain(paramValue);
+            
+            distPreGain.gain(DIST_INGAIN_DEFAULT * expf(paramValue/10.0f)); // 0 - 100 to exponatial gain
             break;
         case 1: // Bias
-            effectParams[FX_INDEX_DIST][1] = paramValue;
+            
             break;
         case 2: // MaxOutput
-            effectParams[FX_INDEX_DIST][2] = paramValue;
-            gain(FX_INDEX_DIST, paramValue);
+            
+            distPostGain.gain(exp10f((paramValue - 100.0f) * 0.01f) * 1.0f);
             break;
     }
 }
@@ -399,26 +394,26 @@ void setStageDistInit(EffectMixer8* stage) {
   }
 }
 
-DMAMEM AudioInputTDM     tdm1;
-DMAMEM AudioOutputTDM    tdm2;
-DMAMEM EffectMixer8      stage1[7];
-DMAMEM EffectMixer8      stage2[7];
-DMAMEM EffectMixer8      stage3[7];
-DMAMEM EffectMixer8      stage4[7];
-DMAMEM EffectMixer8      stage5[7];
-DMAMEM EffectMixer8      stage6[7];
-DMAMEM EffectMixer8      stage7[7];
-DMAMEM AudioAmplifier   masterAmp;
+ AudioInputTDM     tdm1;
+ AudioOutputTDM    tdm2;
+ DMAMEM EffectMixer8      stage1[7];
+ DMAMEM EffectMixer8      stage2[7];
+ DMAMEM EffectMixer8      stage3[7];
+ DMAMEM EffectMixer8      stage4[7];
+ DMAMEM EffectMixer8      stage5[7];
+ DMAMEM EffectMixer8      stage6[7];
+ DMAMEM EffectMixer8      stage7[7];
+ AudioAmplifier   masterAmp;
 
-DMAMEM AudioFilterFIR    cabIR;
-DMAMEM AudioMixer4       cabMix;
-DMAMEM AudioMixer4       monoMix1;
-DMAMEM AudioMixer4       monoMix2;
-DMAMEM AudioMixer4       monoMixOut;
-DMAMEM AudioMixer4       stageMix1;
-DMAMEM AudioMixer4       stageMix2;
-DMAMEM AudioMixer4       stageMixOut;
-DMAMEM AudioControlCS42448 cs42448_1;
+ DMAMEM AudioFilterFIR    cabIR;
+ DMAMEM AudioMixer4       cabMix;
+ DMAMEM AudioMixer4       monoMix1;
+ DMAMEM AudioMixer4       monoMix2;
+ DMAMEM AudioMixer4       monoMixOut;
+ DMAMEM AudioMixer4       stageMix1;
+ DMAMEM AudioMixer4       stageMix2;
+ DMAMEM AudioMixer4       stageMixOut;
+ DMAMEM AudioControlCS42448 cs42448_1;
 
 // ===== Audio connections =====
 DMAMEM AudioConnection patchMono0(tdm1, 0, monoMix1, 0);
@@ -581,6 +576,48 @@ void setStageParameter(uint8_t slotIndex, uint8_t effectIndex, uint8_t paramInde
         case 6:
         for (int i = 0; i < 7; i++) {
             stage7[i].setEffectParam(effectIndex, paramIndex, paramValue);
+        }
+            break;
+        default:
+            break;
+    }
+}
+
+void setStageWetDry(uint8_t slotIndex, float wetDryLevel) {
+    switch (slotIndex) {
+        case 0:
+        for (int i = 0; i < 7; i++) {
+            stage1[i].setWetDryMix(wetDryLevel);
+        }
+            break;
+        case 1:
+        for (int i = 0; i < 7; i++) {
+            stage2[i].setWetDryMix(wetDryLevel);
+        }
+            break;
+        case 2:
+        for (int i = 0; i < 7; i++) {
+            stage3[i].setWetDryMix(wetDryLevel);
+        }
+            break;
+        case 3:
+        for (int i = 0; i < 7; i++) {
+            stage4[i].setWetDryMix(wetDryLevel);
+        }
+            break;
+        case 4:
+        for (int i = 0; i < 7; i++) {
+            stage5[i].setWetDryMix(wetDryLevel);
+        }
+            break;
+        case 5:
+        for (int i = 0; i < 7; i++) {
+            stage6[i].setWetDryMix(wetDryLevel);
+        }
+            break;
+        case 6:
+        for (int i = 0; i < 7; i++) {
+            stage7[i].setWetDryMix(wetDryLevel);
         }
             break;
         default:

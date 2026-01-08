@@ -2,7 +2,7 @@
 #include <SPI.h> // Include SPI for setClock
 
 // Define the TFT object using the pins from the header
-ILI9341_t3n tft = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST);
+ILI9341_t3n tft = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCLK, TFT_MISO);
 
 // LVGL needs two buffers for smooth, tearing-free drawing (about 1/12th screen area)
 static lv_disp_draw_buf_t draw_buf;
@@ -29,7 +29,7 @@ void display_driver_init()
     // Initialize the display hardware, passing the desired SPI clock frequency (16 MHz)
     // The begin() function in ILI9341_t3n accepts the clock speed as an optional argument.
     // If 16MHz works, you can try higher values later (e.g., 30000000 for 30MHz)
-    tft.begin(16000000);
+    tft.begin(30000000);
     
     // tft.setClock(16000000); // <-- REMOVED: Caused error "no member named 'setClock'"
     

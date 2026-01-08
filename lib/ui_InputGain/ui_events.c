@@ -95,7 +95,7 @@ void slider_value_changed(lv_event_t * e){
         }
         else if (slider == ui_SliderParam7) {
             // Slider 7 (Index 6) -> Mix (for ALL effects)
-            setStageParameter(active_slot_index, effectID, 6, val);
+            setStageWetDry(active_slot_index, (float)val / 100.0f);
         }
         else if (slider == ui_SliderParam8) {
             // Slider 8 (Index 7) -> Mono Level (for ALL effects)

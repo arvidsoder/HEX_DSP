@@ -3,8 +3,8 @@
 #include <XPT2046_Touchscreen.h>
 
 // Pins defined here (must match your hardware)
-#define T_CS  34
-#define T_IRQ 41
+#define T_CS  4
+#define T_IRQ 5
 
 extern XPT2046_Touchscreen ts;
 

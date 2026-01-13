@@ -19,14 +19,14 @@ AudioConnection          patchCord13(tdm1, 12, tdm2, 12);
 AudioConnection          patchCord14(tdm1, 13, tdm2, 13);
 AudioConnection          patchCord15(tdm1, 14, tdm2, 14);
 AudioConnection          patchCord16(tdm1, 15, tdm2, 15);
-AudioControlCS42448      cs42448_1;      //xy=414,425
+AudioControlCS42448      a_codec;      //xy=414,425
 // GUItool: end automatically generated code
 
 void setup() {
   AudioMemory(50);
   Serial.begin(9600);
   Serial.println("TDM Passthrough");
-  if (cs42448_1.enable() && cs42448_1.volume(0.75)) {
+  if (a_codec.enable() && a_codec.volume(0.75)) {
     Serial.println("configured CS42448");
   } else {
     Serial.println("failed to config CS42448");

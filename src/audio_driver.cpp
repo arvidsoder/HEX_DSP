@@ -413,7 +413,7 @@ void setStageDistInit(EffectMixer8* stage) {
  DMAMEM AudioMixer4       stageMix1;
  DMAMEM AudioMixer4       stageMix2;
  DMAMEM AudioMixer4       stageMixOut;
- DMAMEM AudioControlCS42448 cs42448_1;
+ DMAMEM AudioControlPCM3168 a_codec;
 
 // ===== Audio connections =====
 DMAMEM AudioConnection patchMono0(tdm1, 0, monoMix1, 0);

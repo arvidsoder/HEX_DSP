@@ -39,7 +39,7 @@ AudioConnection          patchCord13(waveform14, 0, tdm1, 13);
 AudioConnection          patchCord14(waveform13, 0, tdm1, 12);
 AudioConnection          patchCord15(waveform15, 0, tdm1, 14);
 AudioConnection          patchCord16(waveform16, 0, tdm1, 15);
-AudioControlCS42448      cs42448_1;      //xy=554,546
+AudioControlCS42448      a_codec;      //xy=554,546
 // GUItool: end automatically generated code
 
 
@@ -115,7 +115,7 @@ void setup() {
     all16 = true;
   } else {
     Serial.println("failed to config ADAU1966A");
-    if (cs42448_1.enable() && cs42448_1.volume(0.7)) {
+    if (a_codec.enable() && a_codec.volume(0.7)) {
       Serial.println("configured CS42448");
     } else {
       Serial.println("failed to config CS42448");

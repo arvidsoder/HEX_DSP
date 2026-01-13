@@ -18,7 +18,7 @@ unsigned long last_lvgl_tick_ms = 0;
 SdFs sd; // SD card object
 // GUItool: begin automatically generated code
 
-
+#define CODEC_RESET_PIN 17
 #define BUTTON1_PIN 32
 #define BUTTON2_PIN 31
 uint8_t effctidx = 0;
@@ -77,7 +77,7 @@ void stringMixersInit(void){
 
 void setup() {
   AudioMemory(200);
-  delay(2000);
+  delay(200);
   Serial.begin(115200);
   int taps = load_wav_to_fir("Brohymn Mesa 4x12 SM57 V30 1.wav", cabIR, 200, CAB_IR_TAPS, sd);
   if (taps > 0) { 
@@ -86,7 +86,9 @@ void setup() {
   Serial.print("Load failed: "); Serial.println(taps);
 }
 sd.end();
-  if (!cs42448_1.enable() || !cs42448_1.volume(1.0) || !cs42448_1.inputLevel(1.0))
+
+  a_codec.reset(CODEC_RESET_PIN);
+  if (!a_codec.enable() || !a_codec.volume(1.0) || !a_codec.inputLevel(1.0))
   {
     Serial.println("Audio Codec CS42448 not found!");
   }

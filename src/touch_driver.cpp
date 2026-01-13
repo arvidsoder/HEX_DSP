@@ -48,10 +48,10 @@ static void my_touch_read(lv_indev_drv_t *indev, lv_indev_data_t *data)
             // --- CALIBRATION AND MAPPING (SWAPPED AXES) ---
             
             // Map Raw Y (p.y) to Display X (0-320)
-            int32_t x_mapped = 320 - map(p.x, X_RAW_MIN, X_RAW_MAX, 0, 320);
+            int32_t x_mapped = map(p.x, X_RAW_MIN, X_RAW_MAX, 0, 320);
             
             // Map Raw X (p.x) to Display Y (0-240)
-            int32_t y_mapped = 240 - map(p.y, Y_RAW_MIN, Y_RAW_MAX, 0, 240);
+            int32_t y_mapped = map(p.y, Y_RAW_MIN, Y_RAW_MAX, 0, 240);
             
             // Invert Y axis to match display orientation
 

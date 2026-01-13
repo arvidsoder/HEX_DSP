@@ -33,7 +33,7 @@ void display_driver_init()
     
     // tft.setClock(16000000); // <-- REMOVED: Caused error "no member named 'setClock'"
     
-    tft.setRotation(1);      // Set to Landscape (320x240)
+    tft.setRotation(3);      // Set to Landscape (320x240)
     
     // We explicitly disable the library's internal frame buffer, as LVGL handles buffering.
     tft.useFrameBuffer(false);

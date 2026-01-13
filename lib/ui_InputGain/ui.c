@@ -41,7 +41,7 @@ void ui_init(void)
     ui_PanelEditHeader_screen_init();
     ui_ScreenEffectSelector_screen_init();
     ui____initial_actions0 = lv_obj_create(NULL);
-    lv_disp_load_scr(ui_LabelInputTitle);
+    lv_disp_load_scr(ui_TitleMenuHeader);
 }
 
 void ui_destroy(void)

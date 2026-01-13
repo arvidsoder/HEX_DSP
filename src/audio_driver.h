@@ -167,7 +167,7 @@ extern AudioMixer4       monoMixOut;
 extern AudioMixer4       stageMix1;
 extern AudioMixer4       stageMix2;
 extern AudioMixer4       stageMixOut;
-extern AudioControlCS42448 cs42448_1;
+extern AudioControlPCM3168 a_codec;
 
 // ===== Audio connections =====
 extern AudioConnection patchMono0;
